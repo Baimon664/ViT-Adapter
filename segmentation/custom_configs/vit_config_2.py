@@ -21,15 +21,10 @@ model = dict(
         conv_inplane=64,
         n_points=4,
         deform_num_heads=16,
-        interact_with_ffn=True,
-        interact_ffn_ratio=0.25,
-        interact_deform_ratio=0.5,
-        extract_with_ffn=True,
-        extract_ffn_ratio=0.25,
-        extract_deform_ratio=0.5,
-        num_extract_block=2,
-        add_vit_feature=True,
-        interact_indexes=[[0, 5], [6, 11], [12, 17], [18, 23]]),
+        cffn_ratio=0.25,
+        deform_ratio=0.5,
+        with_cp=True,
+        interaction_indexes=[[0, 5], [6, 11], [12, 17], [18, 23]]),
     decode_head=dict(
         type='Mask2FormerHead',
         in_channels=[1024, 1024, 1024, 1024],
@@ -44,7 +39,6 @@ model = dict(
             type='MSDeformAttnPixelDecoder',
             num_outs=3,
             norm_cfg=dict(type='GN', num_groups=32),
-            # norm_cfg = dict(type='BN', requires_grad=True),
             act_cfg=dict(type='ReLU'),
             encoder=dict(
                 type='DetrTransformerEncoder',
@@ -68,7 +62,8 @@ model = dict(
                         feedforward_channels=4096,
                         num_fcs=2,
                         ffn_drop=0.0,
-                        act_cfg=dict(type='ReLU', inplace=True)),
+                        act_cfg=dict(type='ReLU', inplace=True),
+                        with_cp=True),
                     operation_order=('self_attn', 'norm', 'ffn', 'norm')),
                 init_cfg=None),
             positional_encoding=dict(
@@ -98,7 +93,8 @@ model = dict(
                     act_cfg=dict(type='ReLU', inplace=True),
                     ffn_drop=0.0,
                     dropout_layer=None,
-                    add_identity=True),
+                    add_identity=True,
+                    with_cp=True),
                 feedforward_channels=4096,
                 operation_order=('cross_attn', 'norm', 'self_attn', 'norm',
                                  'ffn', 'norm')),
@@ -108,11 +104,9 @@ model = dict(
             use_sigmoid=False,
             loss_weight=2.0,
             reduction='mean',
-            # class_weight=[
-            #     1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-            #     1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.1
-            # ]
-            ),
+            class_weight=[
+                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+            ]),
         loss_mask=dict(
             type='CrossEntropyLoss',
             use_sigmoid=True,
@@ -146,10 +140,9 @@ model = dict(
         iou_thr=0.8,
         filter_low_score=True,
         mode='slide',
-        crop_size=(512, 544),
+        crop_size=(256, 256),
         stride=(256, 256)),
     init_cfg=None)
-find_unused_parameters = True
 dataset_type = 'BangkokScapeDataset'
 data_root = 'bkk-urbanscapes-complete'
 img_norm_cfg = dict(
@@ -200,12 +193,10 @@ data = dict(
         data_root='bkk-urbanscapes-complete',
         img_dir='train',
         ann_dir='train_labels_new',
-        split="splits/train.txt",
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(type='LoadAnnotations'),
-            dict(
-                type='Resize', img_scale=(512, 544), ratio_range=(0.5, 2.0)),
+            dict(type='Resize', img_scale=(512, 544), ratio_range=(0.5, 2.0)),
             dict(type='RandomCrop', crop_size=(256, 256), cat_max_ratio=0.75),
             dict(type='RandomFlip', prob=0.5),
             dict(type='PhotoMetricDistortion'),
@@ -220,13 +211,13 @@ data = dict(
             dict(
                 type='Collect',
                 keys=['img', 'gt_semantic_seg', 'gt_masks', 'gt_labels'])
-        ]),
+        ],
+        split='splits/train.txt'),
     val=dict(
         type='BangkokScapeDataset',
         data_root='bkk-urbanscapes-complete',
         img_dir='val',
         ann_dir='val_labels_new',
-        split="splits/val.txt",
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(
@@ -244,13 +235,13 @@ data = dict(
                     dict(type='ImageToTensor', keys=['img']),
                     dict(type='Collect', keys=['img'])
                 ])
-        ]),
+        ],
+        split='splits/val.txt'),
     test=dict(
         type='BangkokScapeDataset',
         data_root='bkk-urbanscapes-complete',
         img_dir='test',
         ann_dir='test_labels_new',
-        split="splits/test.txt",
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(
@@ -268,12 +259,13 @@ data = dict(
                     dict(type='ImageToTensor', keys=['img']),
                     dict(type='Collect', keys=['img'])
                 ])
-        ]))
+        ],
+        split='splits/test.txt'))
 log_config = dict(
     interval=50, hooks=[dict(type='TextLoggerHook', by_epoch=False)])
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-load_from = 'checkpoints/mask2former_beit_adapter_large_896_80k_cityscapes.pth.tar'
+load_from = 'checkpoints/mask2former_beit_adapter_large_256_80k_cityscapes.pth.tar'
 resume_from = None
 workflow = [('train', 1)]
 cudnn_benchmark = True
@@ -297,7 +289,4 @@ runner = dict(type='IterBasedRunner', max_iters=4000)
 checkpoint_config = dict(by_epoch=False, interval=1000, max_keep_ckpts=1)
 evaluation = dict(
     interval=1000, metric='mIoU', pre_eval=True, save_best='mIoU')
-work_dir = './work_dirs/vit_bangkokscape'
-gpu_ids = range(0, 1)
-auto_resume = False
-device = 'cuda'
+pretrained = 'pretrained/beit_large_patch16_224_pt22k_ft22k.pth'
