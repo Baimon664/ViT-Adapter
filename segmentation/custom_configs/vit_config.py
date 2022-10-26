@@ -108,10 +108,10 @@ model = dict(
             use_sigmoid=False,
             loss_weight=2.0,
             reduction='mean',
-            # class_weight=[
-            #     1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-            #     1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.1
-            # ]
+            class_weight=[
+                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.1
+            ]
             ),
         loss_mask=dict(
             type='CrossEntropyLoss',

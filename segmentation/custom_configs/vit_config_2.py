@@ -4,7 +4,6 @@ num_classes = 11
 norm_cfg = dict(type='BN', requires_grad=True)
 model = dict(
     type='EncoderDecoderMask2Former',
-    pretrained='pretrained/beit_large_patch16_224_pt22k_ft22k.pth',
     backbone=dict(
         type='BEiTAdapter',
         patch_size=16,
@@ -105,7 +104,7 @@ model = dict(
             loss_weight=2.0,
             reduction='mean',
             class_weight=[
-                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.1
             ]),
         loss_mask=dict(
             type='CrossEntropyLoss',
@@ -265,7 +264,7 @@ log_config = dict(
     interval=50, hooks=[dict(type='TextLoggerHook', by_epoch=False)])
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-load_from = 'checkpoints/mask2former_beit_adapter_large_256_80k_cityscapes.pth.tar'
+load_from = 'checkpoints/mask2former_beit_adapter_large_896_80k_mapillary.pth.tar'
 resume_from = None
 workflow = [('train', 1)]
 cudnn_benchmark = True
@@ -289,4 +288,7 @@ runner = dict(type='IterBasedRunner', max_iters=4000)
 checkpoint_config = dict(by_epoch=False, interval=1000, max_keep_ckpts=1)
 evaluation = dict(
     interval=1000, metric='mIoU', pre_eval=True, save_best='mIoU')
-pretrained = 'pretrained/beit_large_patch16_224_pt22k_ft22k.pth'
+work_dir = './work_dirs/vit_bangkokscape'
+gpu_ids = range(0, 1)
+auto_resume = False
+device = 'cuda'

@@ -11,14 +11,14 @@ from ops.modules import MSDeformAttn
 from timm.models.layers import DropPath, trunc_normal_
 from torch.nn.init import normal_
 
-from .base.beit import BEiT
+from .base.beit import BEiT2
 from .adapter_modules import SpatialPriorModule, deform_inputs
 from .adapter_modules import InteractionBlockWithCls as InteractionBlock
 _logger = logging.getLogger(__name__)
 
 
 @BACKBONES.register_module()
-class BEiTAdapter(BEiT):
+class BEiTAdapter(BEiT2):
     def __init__(self, pretrain_size=224, conv_inplane=64, n_points=4, deform_num_heads=6,
                  init_values=0., cffn_ratio=0.25, deform_ratio=1.0, with_cffn=True,
                  interaction_indexes=None, add_vit_feature=True, with_cp=False, *args, **kwargs):

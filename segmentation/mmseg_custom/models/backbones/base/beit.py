@@ -291,7 +291,7 @@ class RelativePositionBias(nn.Module):
 
 
 @BACKBONES.register_module()
-class BEiT(nn.Module):
+class BEiT2(nn.Module):
     """ Vision Transformer with support for patch or hybrid CNN input stage
     """
     
